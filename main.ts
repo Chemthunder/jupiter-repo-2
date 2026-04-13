@@ -1,8 +1,8 @@
 namespace JupiterCore {
     export const ID = "JupiterCore";
 
-    export const MainPlane = Cohesion.Builders.createPlane();
-    export const Core = Cohesion.Builders.createProject(MainPlane);
+    export const MainPlane = Builders.createPlane();
+    export const Core = Builders.createProject(MainPlane);
 
     export const LOGGER = new Logger(ID);
 
@@ -26,10 +26,8 @@ namespace JupiterCore {
     }
 }
 
-//
-
 namespace Jupiter {
-    export const Main = Cohesion.Builders.createProject(JupiterCore.MainPlane);
+    export const Main = Builders.createProject(JupiterCore.MainPlane);
     export const ID = "Jupiter";
     export const LOGGER = new Logger(ID);
 
@@ -42,7 +40,8 @@ namespace Jupiter {
     export const playerObj = JupiterCore.OBJECTS.create(mainPlayer);
 
     playerObj.build(function playerObjScript(sprite: Sprite) {
-        let speed = 100;
+        const baseSpeed = 100;
+        let speed = baseSpeed;
         let shouldShowTrail = true;
 
         forever(function controls() {
@@ -50,51 +49,49 @@ namespace Jupiter {
         });
 
         forever(function dash() {
-            if (controller.A.isPressed()) {
-                speed = 200;
-            } else {
-                speed = 100;
-            }
+            speed = controller.A.isPressed() ? 200 : baseSpeed;
         });
 
         forever(function trailRenderer() {
             if (shouldShowTrail) {
-                const trailParticle = JupiterCore.SPRITES.create(img`
+                if (mainPlayer.vx != 0 || mainPlayer.vy != 0) {
+                    const trailParticle = JupiterCore.SPRITES.create(img`
                     1 1 1 1
                     1 1 1 1
                     1 1 1 1
                     1 1 1 1
                 `, SpriteKind.Projectile);
-                const tpObj = JupiterCore.OBJECTS.create(trailParticle);
+                    const tpObj = JupiterCore.OBJECTS.create(trailParticle);
 
-                tpObj.build(function trailParticleScript(sprite: Sprite) {
-                    sprite.setPosition(mainPlayer.x, mainPlayer.y);
+                    tpObj.build(function trailParticleScript(sprite: Sprite) {
+                        sprite.setPosition(mainPlayer.x, mainPlayer.y);
 
-                    animation.runImageAnimation(sprite, [
-                        img`
+                        animation.runImageAnimation(sprite, [
+                            img`
                             1 1 1 1
                             1 1 1 1
                             1 1 1 1
                             1 1 1 1
                         `,
-                        img`
+                            img`
                             . . . .
                             . 1 1 .
                             . 1 1 .
                             . . . .
                         `,
-                        img`
+                            img`
                             . . . .
                             . . . .
                             . . . .
                             . . . .
                         `
-                    ], 100, false);
+                        ], 100, false);
 
-                    sprite.lifespan = 200;
-                });
+                        sprite.lifespan = 200;
+                    });
 
-                pause(10);
+                    pause(10);
+                }
             }
 
             info.setScore(sprites.allOfKind(SpriteKind.Projectile).length);
@@ -111,7 +108,7 @@ namespace Jupiter {
 
     ballObj.build(function ballObjScript(sprite: Sprite) {
         let speed = 90;
-        
+
         sprite.setVelocity(-speed, -speed);
         sprite.setFlag(SpriteFlag.BounceOnWall, true);
 
